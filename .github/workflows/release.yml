@@ -37,8 +37,8 @@ jobs:
       - name: Check out sd-phone at the same tag
         uses: actions/checkout@v7
         with:
-          repository: Samuels-Development/sd-phone
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          repository: mz-core/sd-phone
+          ref: 7540ab99b40781efc7ca0da178ae579d7f132a20
           path: sd-phone
 
       - uses: actions/setup-node@v7
@@ -75,7 +75,7 @@ jobs:
         working-directory: sd-tablet
         run: |
           mkdir -p ../dist/sd-tablet/web
-          cp fxmanifest.lua README.md ../dist/sd-tablet/
+          cp fxmanifest.lua README.md ../sd-phone/LICENSE ../dist/sd-tablet/
           cp -r client server configs locales images ../dist/sd-tablet/
           cp -r web/build ../dist/sd-tablet/web/build
 
@@ -106,10 +106,10 @@ jobs:
       - name: Zip
         run: |
           cd dist
-          zip -qr ../sd-tablet.zip sd-tablet
+          zip -qr ../sd-tablet-${TAG}.zip sd-tablet
 
       - name: Attach to release
         working-directory: sd-tablet
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${TAG}" ../sd-tablet.zip --clobber
+        run: gh release upload "${TAG}" ../sd-tablet-${TAG}.zip --clobber
