@@ -28,6 +28,7 @@ local PHONE <const> = 'sd-phone'
 
 ---@return TabletFramework|nil
 local function detectFramework()
+    if GetResourceState('mz_sd_bridge') == 'started' then return { name = 'mz', qb = false } end
     if GetResourceState('qbx_core') == 'started' then return { name = 'qbx', qb = true } end
     if GetResourceState('qb-core') == 'started' then
         return { name = 'qb', qb = true, core = exports['qb-core']:GetCoreObject() }
@@ -79,6 +80,11 @@ end
 ---Picks the backend's count-of-item implementation once at load; every path answers 0, never nil.
 ---@return fun(source: number, item: string): number
 local function chooseCount()
+    if framework and framework.name == 'mz' then
+        return function(src, item)
+            return exports.mz_sd_bridge:CountItem(src, item)
+        end
+    end
     if active == 'ox_inventory' then
         return function(src, item)
             local items = exports.ox_inventory:Search(src, 'slots', item)
@@ -133,6 +139,11 @@ local countItem = chooseCount()
 ---resource ('tablet' -> 'useTablet'), which is what the README's ox_inventory definition points at.
 ---@return fun(item: string, cb: fun(source: number)): nil
 local function chooseRegisterUsable()
+    if framework and framework.name == 'mz' then
+        return function(item, cb)
+            return exports.mz_sd_bridge:RegisterUsableItem(item, cb)
+        end
+    end
     if active == 'ox_inventory' then
         return function(item, cb)
             local exportName = 'use' .. item:gsub('^%l', string.upper)
@@ -218,7 +229,7 @@ local ownershipCache = {}
 local function ownedColors(source)
     local now = GetGameTimer()
     local hit = ownershipCache[source]
-    if hit and now - hit.at < OWNERSHIP_TTL then return hit.colors end
+    if framework and framework.name ~= 'mz' and hit and now - hit.at < OWNERSHIP_TTL then return hit.colors end
 
     local colors, seen = {}, {}
     for _, entry in ipairs(cfg.Items or {}) do
